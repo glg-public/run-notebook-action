@@ -1,0 +1,44 @@
+{
+  "name": "run-notebook-action",
+  "version": "0.0.0",
+  "private": true,
+  "description": "A Github action which runs Jupyter notebooks headless-ly.",
+  "main": "lib/main.js",
+  "scripts": {
+    "build": "tsc",
+    "test": "jest"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/glg/run-notebook-action.git"
+  },
+  "keywords": [
+    "actions",
+    "node",
+    "setup"
+  ],
+  "author": "asegal",
+  "license": "MIT",
+  "engines": {
+    "node": "13.10.1",
+    "npm": "6.14.2"
+  },
+  "dependencies": {
+    "@actions/core": "^1.0.0",
+    "@actions/exec": "^1.0.0",
+    "@actions/github": "^1.0.0",
+    "@actions/io": "^1.0.0",
+    "@actions/tool-cache": "^1.0.0",
+    "@types/glob": "^7.1.3",
+    "glob": "^7.1.6",
+    "semver": "^7.1.3"
+  },
+  "devDependencies": {
+    "@types/jest": "^24.0.13",
+    "@types/node": "^12.0.4",
+    "jest": "^24.8.0",
+    "jest-circus": "^24.7.1",
+    "ts-jest": "^24.0.2",
+    "typescript": "^3.5.1"
+  }
+}
