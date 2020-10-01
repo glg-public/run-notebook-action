@@ -1,3 +1,5 @@
+**Note**: This repo has node_modules checked in as that is, believe it or not, best practice for [github actions](https://docs.github.com/en/free-pro-team@latest/actions/creating-actions/creating-a-javascript-action#commit-tag-and-push-your-action-to-github)
+
 # Run notebook
 
 This has been forked from [yaananth/run-notebook](https://www.github.com/yaananth/run-notebook).
