@@ -6,7 +6,9 @@
   "main": "lib/main.js",
   "scripts": {
     "build": "tsc",
-    "test": "jest"
+    "test": "jest",
+    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
+    "lint:fix": "npm run lint -- --fix"
   },
   "repository": {
     "type": "git",
@@ -36,9 +38,28 @@
   "devDependencies": {
     "@types/jest": "^24.0.13",
     "@types/node": "^12.0.4",
+    "@typescript-eslint/eslint-plugin": "^4.3.0",
+    "@typescript-eslint/parser": "^4.3.0",
+    "eslint": "^7.10.0",
+    "eslint-config-prettier": "^6.12.0",
+    "eslint-plugin-node": "^11.1.0",
+    "eslint-plugin-prettier": "^3.1.4",
+    "husky": "^4.3.0",
     "jest": "^24.8.0",
     "jest-circus": "^24.7.1",
+    "lint-staged": "^10.4.0",
+    "prettier": "^2.1.2",
     "ts-jest": "^24.0.2",
-    "typescript": "^3.5.1"
+    "typescript": "^3.9.7"
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged"
+    }
+  },
+  "lint-staged": {
+    "*.{js,jsx,md,ts,tsx}": [
+      "eslint . --ext .js,.jsx,.ts,.tsx --fix"
+    ]
   }
 }

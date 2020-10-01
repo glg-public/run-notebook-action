@@ -68,7 +68,7 @@ def run():
       input_path='${notebookFile}',
       output_path='${parsedNotebookFile}',
       log_output=True,
-      report_mode=${!!isReport ? "True" : "False"}
+      report_mode=${isReport ? "True" : "False"}
     )
   finally:
     isDone = True
@@ -76,7 +76,7 @@ def run():
 results = []
 with ThreadPoolExecutor() as executor:
   results.append(executor.submit(run))
-  if ${!!poll ? "True" : "False"}:
+  if ${poll ? "True" : "False"}:
     results.append(executor.submit(watch))
 
 for task in as_completed(results):
