@@ -7,7 +7,7 @@ import * as glob from "glob";
 async function run() {
   try {
     const workspace = core.getInput('workspace');
-    const papermillOutput = path.join(workspace, "papermill-nb-runner.out");
+    const isReport = core.getInput('isReport');
 
     const requirements = 'requirements.txt';
     const requirementsFile = path.join(workspace, requirements);
@@ -19,8 +19,7 @@ async function run() {
     const notebookFilesPattern = core.getInput('notebooks');
     const notebookFiles = glob.sync(path.join(workspace, notebookFilesPattern));
 
-    const isReport = core.getInput('isReport');
-    const poll = core.getInput('poll');
+    //const isReport = core.getInput('isReport');
 
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir);
@@ -35,62 +34,56 @@ async function run() {
     if (fs.existsSync(requirementsFile)){
       await exec.exec(`python3 -m pip install -r ${requirementsFile}`)
     }
-    await exec.exec('python3 -m pip install papermill ipykernel nbformat');
+    //await exec.exec('python3 -m pip install papermill ipykernel nbformat');
+    await exec.exec('python3 -m pip install nbconvert[webpdf] ipykernel');
     await exec.exec('python3 -m ipykernel install --user');
 
+    //Write out an empty notebook and convert it, in order to trigger installation of pypetteer
+    //Otherwise, there is a race condition which causes multiple installs leading to fatal error
+    //when nbconvert is run via Promise.all.
+    const emptyNotebook = `
+      {
+         "cells": [
+          {
+           "cell_type": "code",
+           "execution_count": null,
+           "metadata": {},
+           "outputs": [],
+           "source": []
+          }
+         ],
+         "metadata": {
+          "kernelspec": {
+           "display_name": "Python 3",
+           "language": "python",
+           "name": "python3"
+          },
+          "language_info": {
+           "codemirror_mode": {
+            "name": "ipython",
+            "version": 3
+           },
+           "file_extension": ".py",
+           "mimetype": "text/x-python",
+           "name": "python",
+           "nbconvert_exporter": "python",
+           "pygments_lexer": "ipython3",
+           "version": "3.7.9"
+          }
+         },
+         "nbformat": 4,
+         "nbformat_minor": 4
+      }
+    `;
+    const emptyNotebookFile = path.join(scriptsDir, 'empty.ipynb');
+    fs.writeFileSync(emptyNotebookFile, emptyNotebook);
+    await exec.exec(`jupyter nbconvert --execute --to webpdf --allow-chromium-download --output "${emptyNotebookFile}" "${emptyNotebookFile}"`);
+
+    const noInput = isReport ? '--no-input' : '';
     // Execute notebooks
-    await Promise.all(notebookFiles.map(async (notebookFile: string, index: number) => {
-      const executeScriptPath = path.join(scriptsDir, `nb-runner-${index}.py`);
-      const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile));
-
-      const pythonCode = `
-import papermill as pm
-import os
-from os import path, system
-import json
-import sys
-from concurrent.futures import ThreadPoolExecutor, as_completed
-from time import sleep
-
-isDone = False
-def watch():
-    global isDone
-    while not isDone:
-      sleep(15)
-      system('echo "***Polling latest output status result***"')
-      system('tail -n 15 ${papermillOutput}')
-      system('echo "***End of polling latest output status result***"')
-
-def run():
-  global isDone
-  try:
-    pm.execute_notebook(
-      input_path='${notebookFile}',
-      output_path='${parsedNotebookFile}',
-      log_output=True,
-      report_mode=${isReport ? "True" : "False"}
-    )
-  finally:
-    isDone = True
-
-results = []
-with ThreadPoolExecutor() as executor:
-  results.append(executor.submit(run))
-  if ${poll ? "True" : "False"}:
-    results.append(executor.submit(watch))
-
-for task in as_completed(results):
-  try:
-    task.result()
-  except Exception as e:
-    print(e, file=sys.stderr)
-    sys.exit(1)
-`;
-
-      fs.writeFileSync(executeScriptPath, pythonCode);
-
-      await exec.exec(`cat ${executeScriptPath}`)
-      await exec.exec(`python3 ${executeScriptPath}`);
+    await Promise.all(notebookFiles.map(async (notebookFile: string) => {
+      const parsedNotebookFile = path.join(outputDir, path.basename(notebookFile, '.ipynb'));
+      exec.exec(`jupyter nbconvert --execute ${noInput} --to webpdf --output "${parsedNotebookFile}" "${notebookFile}"`);
     })).catch((error) => {
       core.setFailed(error.message);
     });
